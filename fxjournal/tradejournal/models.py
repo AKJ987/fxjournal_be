@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from accounts.models import User
 
@@ -7,7 +8,13 @@ class Instrument(models.Model):
     name = models.CharField(max_length=100)
     pip_size = models.DecimalField(
         max_digits=10,
-        decimal_places=5
+        decimal_places=5,
+        help_text="Minimum price movement that represents one pip"
+    )
+    contract_size = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Number of base currency units per standard lot"
     )
 
 
@@ -90,6 +97,13 @@ class Trade(models.Model):
         null=True,
         blank=True
     )
+    exchange_rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        help_text="Base to quote currency exchange rate"
+    )
     direction = models.CharField(
         max_length=10,
         choices=DIRECTION_CHOICES,
@@ -100,11 +114,13 @@ class Trade(models.Model):
         max_digits=10,
         decimal_places=2,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Trade volume in lots"
     )
     leverage = models.PositiveIntegerField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="Amount of borrowed trading power"
     )
     entry_price = models.DecimalField(
         max_digits=12,
@@ -130,6 +146,13 @@ class Trade(models.Model):
         null=True,
         blank=True
     )
+    total_fees = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total broker fees (commission + swap + spread)"
+    )
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
@@ -140,6 +163,11 @@ class Trade(models.Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True
+    )
+    object_id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
     )
 
     def save(self, *args, **kwargs):

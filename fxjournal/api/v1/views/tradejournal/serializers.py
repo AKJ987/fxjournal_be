@@ -50,6 +50,7 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
             "entry_time": {"required": True},
             "broker": {"required": True},
             "instrument": {"required": True},
+            "exchange_rate": {"required": True},
             "direction": {"required": True},
             "lot_size": {"required": True},
             "leverage": {"required": True},
@@ -180,6 +181,7 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
                 "exit_date": None,
                 "exit_time": None,
                 "exit_price": None,
+                "total_fees": None,
             })
             if psychology_data:
                 psychology_data.update({
@@ -224,3 +226,18 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         # Return the custom response data
         return getattr(self, "response_data", {})
+
+
+class TradeListSerializer(serializers.ModelSerializer):
+    instrument = serializers.CharField(source="instrument.name")
+    profit_loss = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Trade
+        fields = [
+            "id",
+            "entry_date",
+            "instrument",
+            "direction",
+            "status",
+        ]

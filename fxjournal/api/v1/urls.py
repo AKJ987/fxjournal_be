@@ -17,5 +17,6 @@ urlpatterns = [
     path('session/dropdown/', views.SessionDropdownAPIView.as_view(), name='session-dropdown'),
     path('market/condition/dropdown/', views.MarketConditionDropdownAPIView.as_view(), name='market-condition-dropdown'),
     path('trade/create/', views.TradeCreateAPIView.as_view(), name='trade-create'),
-    path('trade/update/<int:pk>/', views.TradeUpdateAPIView.as_view(), name='trade-update'),
+    path('trade/update/<uuid:object_id>/', views.TradeUpdateAPIView.as_view(), name='trade-update'),
+    path('trade/list/', views.TradeListAPIView.as_view(), name='trade-list'),
 ]
