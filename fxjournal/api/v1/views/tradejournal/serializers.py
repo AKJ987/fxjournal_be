@@ -230,14 +230,18 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
 
 class TradeListSerializer(serializers.ModelSerializer):
     instrument = serializers.CharField(source="instrument.name")
-    profit_loss = serializers.SerializerMethodField()
+    net_pnl = serializers.DecimalField(max_digits=20, decimal_places=2)
+    result = serializers.CharField()
 
     class Meta:
         model = Trade
         fields = [
             "id",
+            "trade_id",
             "entry_date",
             "instrument",
             "direction",
             "status",
+            "net_pnl",
+            "result"
         ]
