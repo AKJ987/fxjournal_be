@@ -243,5 +243,86 @@ class TradeListSerializer(serializers.ModelSerializer):
             "direction",
             "status",
             "net_pnl",
-            "result"
+            "result",
+            "object_id"
         ]
+
+
+class TradeDetailSerializer(serializers.ModelSerializer):
+    instrument = serializers.CharField(source="instrument.name", default=None)
+    strategy = serializers.CharField(source="setup.strategy.name", default=None)
+    timeframe = serializers.CharField(source="setup.timeframe.name", default=None)
+    market_session = serializers.CharField(source="setup.market_session.name", default=None)
+    market_condition = serializers.CharField(source="setup.market_condition.name", default=None)
+    entry_reason = serializers.CharField(source="setup.entry_reason", default=None)
+    confidence_level = serializers.IntegerField(source="psychology.confidence_level", default=None)
+    emotional_state = serializers.CharField(source="psychology.emotional_state", default=None)
+    stress_level = serializers.CharField(source="psychology.stress_level", default=None)
+    followed_trading_plan = serializers.BooleanField(source="psychology.followed_trading_plan", default=None)
+    emotion_after_trade = serializers.CharField(source="psychology.emotion_after_trade", default=None)
+    mistakes_made = serializers.CharField(source="psychology.mistakes_made", default=None)
+    lessons_learned = serializers.CharField(source="psychology.lessons_learned", default=None)
+    what_went_well = serializers.CharField(source="psychology.what_went_well", default=None)
+    improvement_plan = serializers.CharField(source="psychology.improvement_plan", default=None)
+    screenshots = serializers.SerializerMethodField()
+    pips = serializers.DecimalField(max_digits=20, decimal_places=2)
+    net_pnl = serializers.DecimalField(max_digits=20, decimal_places=2)
+    result = serializers.CharField()
+    risk = serializers.SerializerMethodField()
+    reward = serializers.SerializerMethodField()
+    riskrewardratio = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Trade
+        fields = [
+            "id", "object_id", "trade_id", "status", "direction", "broker",
+            "instrument", "entry_date", "entry_time", "exit_date", "exit_time",
+            "entry_price", "exit_price", "stop_loss", "take_profit",
+            "lot_size", "leverage", "exchange_rate", "total_fees",
+            "strategy", "timeframe", "market_session",
+            "market_condition", "entry_reason",
+            "confidence_level", "emotional_state", "stress_level",
+            "followed_trading_plan", "emotion_after_trade", "mistakes_made",
+            "lessons_learned", "what_went_well", "improvement_plan",
+            "screenshots",
+            "risk", "reward", "riskrewardratio",
+            "pips", "net_pnl", "result",
+            "created_at", "updated_at"
+        ]
+
+    def get_screenshots(self, obj):
+        return [
+            {
+                "id": s.id,
+                "file_name": s.file_name,
+                "image": s.image.url,
+            }
+            for s in obj.screenshots.all()
+        ]
+    
+    def _get_risk(self, obj):
+        if not obj.entry_price:
+            return None
+        return round(abs(obj.entry_price - obj.stop_loss) / obj.instrument.pip_size, 2)
+
+    def _get_reward(self, obj):
+        if not obj.entry_price:
+            return None
+        return round(abs(obj.take_profit - obj.entry_price) / obj.instrument.pip_size, 2)
+
+    def get_risk(self, obj):
+        return self._get_risk(obj)
+
+    def get_reward(self, obj):
+        return self._get_reward(obj)
+
+    def get_riskrewardratio(self, obj):
+        risk = self._get_risk(obj)
+        reward = self._get_reward(obj)
+        if not risk or not reward:
+            return None
+
+        if risk >= reward:
+            return f"{round(risk / reward, 1)}:1"
+        else:
+            return f"1:{round(reward / risk, 1)}"

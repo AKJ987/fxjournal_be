@@ -1,4 +1,9 @@
-from rest_framework.generics import CreateAPIView, UpdateAPIView, ListAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    UpdateAPIView,
+    ListAPIView,
+    RetrieveAPIView,
+)
 from rest_framework.permissions import AllowAny
 from utils.generic_views import DropdownListAPIView
 from utils.mixins import SuccessMessageMixin, ExportMixin
@@ -12,7 +17,8 @@ from tradejournal.models import (
 )
 from .serializers import (
     TradeCreateUpdateSerializer,
-    TradeListSerializer
+    TradeListSerializer,
+    TradeDetailSerializer
 )
 from .functions import annotate_trade_performance
 
@@ -149,3 +155,22 @@ class TradeListAPIView(ExportMixin, ListAPIView):
             return self.export(request, *args, **kwargs)
 
         return super().get(request, *args, **kwargs)
+
+
+class TradeDetailAPIView(RetrieveAPIView):
+    serializer_class = TradeDetailSerializer
+    lookup_field = "object_id"
+
+    def get_queryset(self):
+        queryset = Trade.objects.filter(
+            user=self.request.user
+        ).select_related(
+            "instrument",
+            "setup__strategy",
+            "setup__timeframe",
+            "setup__market_session",
+            "setup__market_condition",
+            "psychology",
+        ).prefetch_related("screenshots")
+
+        return annotate_trade_performance(queryset)

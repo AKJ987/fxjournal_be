@@ -19,4 +19,5 @@ urlpatterns = [
     path('trade/create/', views.TradeCreateAPIView.as_view(), name='trade-create'),
     path('trade/update/<uuid:object_id>/', views.TradeUpdateAPIView.as_view(), name='trade-update'),
     path('trade/list/', views.TradeListAPIView.as_view(), name='trade-list'),
+    path('trade/detail/<uuid:object_id>/', views.TradeDetailAPIView.as_view(), name='trade-details'),
 ]

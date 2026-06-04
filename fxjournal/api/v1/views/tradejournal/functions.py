@@ -12,13 +12,16 @@ def annotate_trade_performance(queryset):
     """
 
     # Pips: (exit - entry) / pip_size for BUY, (entry - exit) / pip_size for SELL
-    pips_expr = Case(
-        When(
-            direction="BUY",
-            then=(F("exit_price") - F("entry_price")) / F("instrument__pip_size"),
+    pips_expr = Round(
+        Case(
+            When(
+                direction="BUY",
+                then=(F("exit_price") - F("entry_price")) / F("instrument__pip_size"),
+            ),
+            default=(F("entry_price") - F("exit_price")) / F("instrument__pip_size"),
+            output_field=DecimalField(),
         ),
-        default=(F("entry_price") - F("exit_price")) / F("instrument__pip_size"),
-        output_field=DecimalField(),
+        precision=1
     )
 
     # pip_value = (pip_size / exchange_rate) * contract_size
@@ -53,6 +56,7 @@ def annotate_trade_performance(queryset):
 
     return (
         queryset
+        .annotate(pips=pips_expr)
         .annotate(net_pnl=net_pnl_expr)
         .annotate(result=result_expr)
     )
