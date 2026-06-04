@@ -32,6 +32,17 @@ class SuccessMessageMixin:
         }
         return response
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Overrides the default destroy method to add a success message after object deletion.
+        """
+        super().destroy(request, *args, **kwargs)
+        message = self.success_message
+
+        return Response({
+            'message': message
+        }, status=status.HTTP_200_OK)
+
 
 class ExportMixin(APIView):
     """

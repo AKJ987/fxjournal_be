@@ -3,6 +3,7 @@ from rest_framework.generics import (
     UpdateAPIView,
     ListAPIView,
     RetrieveAPIView,
+    DestroyAPIView,
 )
 from rest_framework.permissions import AllowAny
 from utils.generic_views import DropdownListAPIView
@@ -14,6 +15,7 @@ from tradejournal.models import (
     Session,
     MarketCondition,
     Trade,
+    TradeScreenshot,
 )
 from .serializers import (
     TradeCreateUpdateSerializer,
@@ -158,6 +160,9 @@ class TradeListAPIView(ExportMixin, ListAPIView):
 
 
 class TradeDetailAPIView(RetrieveAPIView):
+    """
+    API view for listing trade details.
+    """
     serializer_class = TradeDetailSerializer
     lookup_field = "object_id"
 
@@ -174,3 +179,44 @@ class TradeDetailAPIView(RetrieveAPIView):
         ).prefetch_related("screenshots")
 
         return annotate_trade_performance(queryset)
+
+
+
+class TradeDeleteAPIView(SuccessMessageMixin, DestroyAPIView):
+    """
+    API view for deleting a trade and its related screenshots.
+    """
+    queryset = Trade.objects.all()
+    success_message = "Trade entry deleted successfully."
+    lookup_field = "object_id"
+
+    def get_queryset(self):
+        return Trade.objects.filter(
+            user=self.request.user
+        ).prefetch_related("screenshots")
+
+    def perform_destroy(self, instance):
+        # delete cloud files first
+        for shot in instance.screenshots.all():
+            shot.image.delete(save=False)
+
+        # delete DB records
+        instance.delete()
+
+
+class TradeScreenshotDeleteAPIView(SuccessMessageMixin, DestroyAPIView):
+    """
+    API view for deleting a trade screenshot.
+    """
+    queryset = TradeScreenshot.objects.all()
+    success_message = "Screenshot deleted successfully."
+    lookup_field = "id"
+
+    def get_queryset(self):
+        return TradeScreenshot.objects.filter(
+            trade__user=self.request.user
+        ).select_related("trade")
+
+    def perform_destroy(self, instance):
+        instance.image.delete(save=False)
+        instance.delete()
