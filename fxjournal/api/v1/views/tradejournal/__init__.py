@@ -8,6 +8,7 @@ from rest_framework.generics import (
 from rest_framework.permissions import AllowAny
 from utils.generic_views import DropdownListAPIView
 from utils.mixins import SuccessMessageMixin, ExportMixin
+from utils.functions import annotate_trade_performance
 from tradejournal.models import (
     Instrument,
     Strategy,
@@ -22,7 +23,6 @@ from .serializers import (
     TradeListSerializer,
     TradeDetailSerializer
 )
-from .functions import annotate_trade_performance
 
 class InstrumentDropdownAPIView(DropdownListAPIView):
     """

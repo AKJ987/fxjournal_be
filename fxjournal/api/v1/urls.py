@@ -22,4 +22,11 @@ urlpatterns = [
     path('trade/detail/<uuid:object_id>/', views.TradeDetailAPIView.as_view(), name='trade-details'),
     path('trade/delete/<uuid:object_id>/', views.TradeDeleteAPIView.as_view(), name='trade-delete'),
     path('screenshot/delete/<int:id>/', views.TradeScreenshotDeleteAPIView.as_view(), name='screenshot-delete'),
+
+    path('trade/stats/list/', views.TradeStatsListAPIView.as_view(), name='trade-stats-list'),
+    path('dashboard/trade/stats/', views.DashboardTradeStatsListAPIView.as_view(), name='dashboard-trade-stats'),
+    path("trades/pl-chart/", views.TradePLChartAPIView.as_view(), name="trade-pl-chart"),
+    path("trades/win/loss/ratio/", views.TradeWinLossRatioAPIView.as_view(), name="trade-win-loss-ratio"),
+    path("trades/netprofitby/strategy/", views.TradeNetProfitByStrategyAPIView.as_view(), name="trade-net-profit-by-strategy"),
+    path("trades/winrateby/session/", views.TradeWinRateBySessionAPIView.as_view(), name="trade-win-rate-by-session"),
 ]
