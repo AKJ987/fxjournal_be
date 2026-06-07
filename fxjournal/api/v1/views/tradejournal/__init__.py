@@ -5,7 +5,7 @@ from rest_framework.generics import (
     RetrieveAPIView,
     DestroyAPIView,
 )
-from rest_framework.permissions import AllowAny
+from django.db.models import Q
 from utils.generic_views import DropdownListAPIView
 from utils.mixins import SuccessMessageMixin, ExportMixin
 from utils.functions import annotate_trade_performance
@@ -28,7 +28,6 @@ class InstrumentDropdownAPIView(DropdownListAPIView):
     """
     API view for listing instruments in a dropdown.
     """
-    permission_classes = [AllowAny]
     queryset = Instrument.objects.all()
     search_fields = ['name']
     ordering = ['id']
@@ -129,8 +128,8 @@ class TradeListAPIView(ExportMixin, ListAPIView):
         if entry_date_lte := params.get("entry_date__lte"):
             queryset = queryset.filter(entry_date__lte=entry_date_lte)
 
-        if instrument := params.get("instrument__name"):
-            queryset = queryset.filter(instrument__name=instrument)
+        if instrument := params.get("instrument"):
+            queryset = queryset.filter(instrument_id=instrument)
 
         if direction := params.get("direction"):
             queryset = queryset.filter(direction=direction)
@@ -142,7 +141,10 @@ class TradeListAPIView(ExportMixin, ListAPIView):
             queryset = queryset.filter(result=result)
 
         if search := params.get("search"):
-            queryset = queryset.filter(instrument__name__icontains=search)
+            queryset = queryset.filter(
+                Q(instrument__name__icontains=search) |
+                Q(trade_id__icontains=search)
+            )
 
         # Sorting
         if sorting := params.get("sorting"):
