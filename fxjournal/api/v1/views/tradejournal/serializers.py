@@ -65,83 +65,108 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
         entry_time = attrs.get("entry_time")
         exit_date = attrs.get("exit_date")
         exit_time = attrs.get("exit_time")
-
         entry_price = attrs.get("entry_price")
         stop_loss = attrs.get("stop_loss")
         take_profit = attrs.get("take_profit")
-
         direction = attrs.get("direction")
         status = attrs.get("status")
         exit_price = attrs.get("exit_price")
 
-        errors = {}
-
         # Closed trade validations
         if status == "CLOSED":
             if not exit_date:
-                errors["exit_date"] = "Exit date is required for closed trades."
+                raise serializers.ValidationError(
+                    {"error": "Exit date is required for closed trades."}
+                )
 
             if not exit_time:
-                errors["exit_time"] = "Exit time is required for closed trades."
+                raise serializers.ValidationError(
+                    {"error": "Exit time is required for closed trades."}
+                )
 
             if exit_price is None:
-                errors["exit_price"] = "Exit price is required for closed trades."
+                raise serializers.ValidationError(
+                    {"error": "Exit price is required for closed trades."}
+                )
 
         # Exit datetime >= Entry datetime
-        if (entry_date and entry_time and exit_date and exit_time):
-            # Combine date and time
+        if entry_date and entry_time and exit_date and exit_time:
             entry_dt = datetime.combine(entry_date, entry_time)
             exit_dt = datetime.combine(exit_date, exit_time)
 
             if exit_dt < entry_dt:
-                errors["exit_date"] = (
-                    "Exit date and time must be greater than or equal to entry date and time."
+                raise serializers.ValidationError(
+                    {"error": (
+                        "Exit date and time must be greater than or equal "
+                        "to entry date and time."
+                    )}
                 )
 
         # BUY validations
-        if (direction == "BUY" and entry_price is not None):
-            if (
-                take_profit is not None
-                and take_profit <= entry_price
-            ):
-                errors["take_profit"] = (
-                    "For BUY trades, take profit must be greater than entry price."
+        if direction == "BUY" and entry_price is not None:
+            if take_profit is not None and take_profit <= entry_price:
+                raise serializers.ValidationError(
+                    {"error": (
+                        "For BUY trades, take profit must be greater than "
+                        "entry price."
+                    )}
                 )
-            if (
-                stop_loss is not None
-                and stop_loss >= entry_price
-            ):
-                errors["stop_loss"] = (
-                    "For BUY trades, stop loss must be less than entry price."
+
+            if stop_loss is not None and stop_loss >= entry_price:
+                raise serializers.ValidationError(
+                    {"error": (
+                        "For BUY trades, stop loss must be less than "
+                        "entry price."
+                    )}
                 )
 
         # SELL validations
-        if (direction == "SELL" and entry_price is not None):
-            if (
-                take_profit is not None
-                and take_profit >= entry_price
-            ):
-                errors["take_profit"] = (
-                    "For SELL trades, take profit must be less than entry price."
-                )
-            if (
-                stop_loss is not None
-                and stop_loss <= entry_price
-            ):
-                errors["stop_loss"] = (
-                    "For SELL trades, stop loss must be greater than entry price."
+        if direction == "SELL" and entry_price is not None:
+            if take_profit is not None and take_profit >= entry_price:
+                raise serializers.ValidationError(
+                    {"error": (
+                        "For SELL trades, take profit must be less than "
+                        "entry price."
+                    )}
                 )
 
-        if errors:
-            raise serializers.ValidationError(errors)
-
+            if stop_loss is not None and stop_loss <= entry_price:
+                raise serializers.ValidationError(
+                    {"error": (
+                        "For SELL trades, stop loss must be greater than "
+                        "entry price."
+                    )}
+                )
         return attrs
+
+    def _handle_open_trade_cleanup(self, validated_data, psychology_data):
+        """
+        Clears exit + psychology fields when trade status is OPEN.
+        """
+        if validated_data.get("status") == "OPEN":
+            validated_data.update({
+                "exit_date": None,
+                "exit_time": None,
+                "exit_price": None,
+                "total_fees": None,
+            })
+
+            if psychology_data:
+                psychology_data.update({
+                    "emotion_after_trade": None,
+                    "mistakes_made": None,
+                    "lessons_learned": None,
+                    "what_went_well": None,
+                    "improvement_plan": None,
+                })
 
     @transaction.atomic
     def create(self, validated_data):
         setup_data = validated_data.pop("setup", None)
         psychology_data = validated_data.pop("psychology", None)
         screenshots_data = validated_data.pop("screenshots", [])
+
+        self._handle_open_trade_cleanup(validated_data, psychology_data)
 
         trade = Trade.objects.create(
             user=self.context["request"].user,
@@ -176,21 +201,7 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
         psychology_data = validated_data.pop("psychology", None)
         screenshots_data = validated_data.pop("screenshots", [])
 
-        if validated_data.get("status") == "OPEN":
-            validated_data.update({
-                "exit_date": None,
-                "exit_time": None,
-                "exit_price": None,
-                "total_fees": None,
-            })
-            if psychology_data:
-                psychology_data.update({
-                    "emotion_after_trade": None,
-                    "mistakes_made": None,
-                    "lessons_learned": None,
-                    "what_went_well": None,
-                    "improvement_plan": None,
-                })
+        self._handle_open_trade_cleanup(validated_data, psychology_data)
 
         # Update Trade fields
         for attr, value in validated_data.items():

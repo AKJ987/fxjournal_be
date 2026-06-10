@@ -14,7 +14,7 @@ class TradeStatsListAPIView(APIView):
     """
     def get(self, request):
         qs = annotate_trade_performance(
-            Trade.objects.filter(user=request.user, status="CLOSED")
+            Trade.objects.filter(user=request.user)
         )
 
         stats = qs.aggregate(
