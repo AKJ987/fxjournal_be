@@ -22,6 +22,7 @@ urlpatterns = [
     path('trade/detail/<uuid:object_id>/', views.TradeDetailAPIView.as_view(), name='trade-details'),
     path('trade/delete/<uuid:object_id>/', views.TradeDeleteAPIView.as_view(), name='trade-delete'),
     path('screenshot/delete/<int:id>/', views.TradeScreenshotDeleteAPIView.as_view(), name='screenshot-delete'),
+    path('trade/update/detail/<uuid:object_id>/', views.TradeUpdateDetailAPIView.as_view(), name='trade-update-details'),
 
     path('trade/stats/list/', views.TradeStatsListAPIView.as_view(), name='trade-stats-list'),
     path('dashboard/trade/stats/', views.DashboardTradeStatsListAPIView.as_view(), name='dashboard-trade-stats'),

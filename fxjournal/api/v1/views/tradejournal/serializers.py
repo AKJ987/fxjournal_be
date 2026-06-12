@@ -41,6 +41,10 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
         child=serializers.ImageField(),
         required=False,
     )
+    deleted_screenshots = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+    )
 
     class Meta:
         model = Trade
@@ -200,6 +204,7 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
         setup_data = validated_data.pop("setup", None)
         psychology_data = validated_data.pop("psychology", None)
         screenshots_data = validated_data.pop("screenshots", [])
+        deleted_screenshots = validated_data.pop("deleted_screenshots", [])
 
         self._handle_open_trade_cleanup(validated_data, psychology_data)
 
@@ -222,6 +227,15 @@ class TradeCreateUpdateSerializer(serializers.ModelSerializer):
                 trade=instance,
                 defaults=psychology_data,
             )
+
+        if deleted_screenshots:
+            screenshots_to_delete = TradeScreenshot.objects.filter(
+                id__in=deleted_screenshots,
+                trade=instance
+            )
+            for screenshot in screenshots_to_delete:
+                screenshot.image.delete(save=False)
+                screenshot.delete()
 
         # Create new screenshots
         for screenshot in screenshots_data:
@@ -281,7 +295,6 @@ class TradeDetailSerializer(serializers.ModelSerializer):
     result = serializers.CharField()
     risk = serializers.SerializerMethodField()
     reward = serializers.SerializerMethodField()
-    riskrewardratio = serializers.SerializerMethodField()
 
     class Meta:
         model = Trade
@@ -296,7 +309,7 @@ class TradeDetailSerializer(serializers.ModelSerializer):
             "followed_trading_plan", "emotion_after_trade", "mistakes_made",
             "lessons_learned", "what_went_well", "improvement_plan",
             "screenshots",
-            "risk", "reward", "riskrewardratio",
+            "risk", "reward",
             "pips", "net_pnl", "result",
             "created_at", "updated_at"
         ]
@@ -311,29 +324,77 @@ class TradeDetailSerializer(serializers.ModelSerializer):
             for s in obj.screenshots.all()
         ]
     
-    def _get_risk(self, obj):
+    def get_risk(self, obj):
         if not obj.entry_price:
             return None
         return round(abs(obj.entry_price - obj.stop_loss) / obj.instrument.pip_size, 2)
 
-    def _get_reward(self, obj):
+    def get_reward(self, obj):
         if not obj.entry_price:
             return None
         return round(abs(obj.take_profit - obj.entry_price) / obj.instrument.pip_size, 2)
 
-    def get_risk(self, obj):
-        return self._get_risk(obj)
 
-    def get_reward(self, obj):
-        return self._get_reward(obj)
+class TradeSetupDetailSerializer(serializers.Serializer):
+    strategy = serializers.IntegerField(source="strategy.id")
+    timeframe = serializers.IntegerField(source="timeframe.id")
+    market_session = serializers.IntegerField(source="market_session.id")
+    market_condition = serializers.IntegerField(source="market_condition.id")
+    entry_reason = serializers.CharField(allow_null=True)
 
-    def get_riskrewardratio(self, obj):
-        risk = self._get_risk(obj)
-        reward = self._get_reward(obj)
-        if not risk or not reward:
-            return None
 
-        if risk >= reward:
-            return f"{round(risk / reward, 1)}:1"
-        else:
-            return f"1:{round(reward / risk, 1)}"
+class PsychologyDetailSerializer(serializers.Serializer):
+    confidence_level = serializers.IntegerField()
+    emotional_state = serializers.CharField()
+    stress_level = serializers.CharField()
+    followed_trading_plan = serializers.SerializerMethodField()
+    emotion_after_trade = serializers.CharField(allow_null=True)
+    mistakes_made = serializers.CharField(allow_null=True)
+    lessons_learned = serializers.CharField(allow_null=True)
+    what_went_well = serializers.CharField(allow_null=True)
+    improvement_plan = serializers.CharField(allow_null=True)
+
+    def get_followed_trading_plan(self, obj):
+        return "YES" if obj.followed_trading_plan else "NO"
+
+
+class TradeUpdateDetailSerializer(serializers.ModelSerializer):
+    instrument = serializers.IntegerField(source="instrument.id")
+    setup = TradeSetupDetailSerializer(read_only=True)
+    psychology = PsychologyDetailSerializer(read_only=True)
+    screenshots = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Trade
+        fields = [
+            "entry_date",
+            "entry_time",
+            "exit_date",
+            "exit_time",
+            "broker",
+            "instrument",
+            "exchange_rate",
+            "direction",
+            "lot_size",
+            "leverage",
+            "entry_price",
+            "exit_price",
+            "stop_loss",
+            "take_profit",
+            "total_fees",
+            "status",
+            "setup",
+            "psychology",
+            "screenshots"
+        ]
+
+    def get_screenshots(self, obj):
+        return [
+            {
+                "id": screenshot.id,
+                "name": screenshot.file_name,
+                "image": screenshot.image.url,
+                "size": screenshot.image.size,
+            }
+            for screenshot in obj.screenshots.all()
+        ]

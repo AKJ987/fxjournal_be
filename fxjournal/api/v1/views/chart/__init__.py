@@ -107,9 +107,10 @@ class TradePLChartAPIView(APIView):
         for trade in last_10:
             pl = float(round(trade.net_pnl, 2))
             sign = "+" if pl >= 0 else ""
+            prefix, number = trade.trade_id.split("-")
 
             chart_data.append({
-                "name": trade.trade_id.replace("-", "").replace("0", ""),
+                "name": f"{prefix}{int(number)}",
                 "pl": pl,
                 "display": f"{sign}${trade.net_pnl:,.2f} P&L",
             })

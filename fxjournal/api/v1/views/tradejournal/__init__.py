@@ -21,7 +21,8 @@ from tradejournal.models import (
 from .serializers import (
     TradeCreateUpdateSerializer,
     TradeListSerializer,
-    TradeDetailSerializer
+    TradeDetailSerializer,
+    TradeUpdateDetailSerializer
 )
 
 class InstrumentDropdownAPIView(DropdownListAPIView):
@@ -222,3 +223,25 @@ class TradeScreenshotDeleteAPIView(SuccessMessageMixin, DestroyAPIView):
     def perform_destroy(self, instance):
         instance.image.delete(save=False)
         instance.delete()
+
+
+class TradeUpdateDetailAPIView(RetrieveAPIView):
+    """
+    API view for listing trade details for update.
+    """
+    serializer_class = TradeUpdateDetailSerializer
+    lookup_field = "object_id"
+
+    def get_queryset(self):
+        queryset = Trade.objects.filter(
+            user=self.request.user
+        ).select_related(
+            "instrument",
+            "setup__strategy",
+            "setup__timeframe",
+            "setup__market_session",
+            "setup__market_condition",
+            "psychology",
+        ).prefetch_related("screenshots")
+
+        return queryset
