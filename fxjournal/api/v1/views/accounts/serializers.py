@@ -1,4 +1,7 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import User
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -32,3 +35,46 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = authenticate(
+            username=attrs.get("username"),
+            password=attrs.get("password")
+        )
+
+        if not user:
+            raise AuthenticationFailed("Invalid username or password.")
+
+        if not user.is_active:
+            raise AuthenticationFailed("User account is disabled.")
+
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+            },
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        }
+
+
+class UserLogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate(self, attrs):
+        try:
+            token = RefreshToken(attrs["refresh"])
+            token.blacklist()
+        except Exception:
+            raise ValidationError("Invalid refresh token.")
+
+        return {}
