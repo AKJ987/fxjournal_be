@@ -3,33 +3,39 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import User
+from .functions import is_password_valid
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
     full_name = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
-    phone = serializers.CharField(required=True)
-
+    
     class Meta:
         model = User
-        fields = ("full_name", "email", "phone", "password")
+        fields = ("full_name", "email", "password", "confirm_password")
 
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists.")
-        return value
-    
-    def validate_phone(self, value):
-        if User.objects.filter(phone=value).exists():
-            raise serializers.ValidationError("Phone already exists.")
-        return value
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        confirm_password = attrs.pop("confirm_password")
+
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError({"error": "Email already exists."})
+
+        if not is_password_valid(password):
+            raise serializers.ValidationError({"error": "Password does not meet requirements."})
+
+        if password != confirm_password:
+            raise serializers.ValidationError({"error": "Passwords do not match."})
+
+        return attrs
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        email = validated_data["email"]
 
         user = User(
-            username=email,
+            username=validated_data["email"],
             **validated_data
         )
         user.set_password(password)

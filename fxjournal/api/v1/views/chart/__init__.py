@@ -74,7 +74,7 @@ class DashboardTradeStatsListAPIView(APIView):
             loss_rate = Decimal(loss_count) / Decimal(total)
             expectancy = round((win_rate * avg_win) + (loss_rate * avg_loss), 2)
         else:
-            expectancy = None
+            expectancy = 0
 
         return Response({
             "net_pnl": net_pnl,
