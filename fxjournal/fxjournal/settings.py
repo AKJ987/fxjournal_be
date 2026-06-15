@@ -160,7 +160,7 @@ AUTH_USER_MODEL = 'accounts.User'
 
 CORS_ORIGIN_REGEX_WHITELIST = [
     r'^http://localhost:\d{4}$',
-    r'^https://your-app\.vercel\.app$',
+    r'^https://.*\.vercel\.app$',
 ]
 
 SIMPLE_JWT = {
