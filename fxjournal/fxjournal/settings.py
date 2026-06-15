@@ -10,12 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import os
 from pathlib import Path
-from configparser import RawConfigParser
 from datetime import timedelta
-
-config = RawConfigParser()
-config.read('../../fxjournal.ini')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config.get('settings', 'SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config.get('settings', 'DEBUG')
+DEBUG = os.environ.get('DEBUG')
 
 ALLOWED_HOSTS = ['*']
 
@@ -106,11 +103,11 @@ WSGI_APPLICATION = 'fxjournal.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config.get('database', 'DATABASE_NAME'),
-        'USER': config.get('database', 'DATABASE_USER'),
-        'PASSWORD': config.get('database', 'DATABASE_PASSWORD'),
-        'HOST': config.get('database', 'DATABASE_HOST'),
-        'PORT': config.get('database', 'DATABASE_PORT'),
+        'NAME': os.environ.get('DATABASE_NAME'),
+        'USER': os.environ.get('DATABASE_USER'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
+        'HOST': os.environ.get('DATABASE_HOST'),
+        'PORT': os.environ.get('DATABASE_PORT'),
         'OPTIONS': {
             'sslmode': 'require',
         },
@@ -168,17 +165,17 @@ CORS_ORIGIN_REGEX_WHITELIST = [
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(config.get('simple_jwt', 'ACCESS_TOKEN_LIFETIME'))
+        minutes=int(os.environ.get('ACCESS_TOKEN_LIFETIME'))
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=int(config.get('simple_jwt', 'REFRESH_TOKEN_LIFETIME'))
+        days=int(os.environ.get('REFRESH_TOKEN_LIFETIME'))
     ),
 }
 
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": config.get('cloudinary', 'CLOUD_NAME'),
-    "API_KEY": config.get('cloudinary', 'API_KEY'),
-    "API_SECRET": config.get('cloudinary', 'API_SECRET'),
+    "CLOUD_NAME": os.environ.get('CLOUD_NAME'),
+    "API_KEY": os.environ.get('API_KEY'),
+    "API_SECRET": os.environ.get('API_SECRET'),
 }
 
 STORAGES = {
@@ -197,7 +194,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = config.get('smtp', 'EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config.get('smtp', 'EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_HEADER = "Trade Journal - {}"
