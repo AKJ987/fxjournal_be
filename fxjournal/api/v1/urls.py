@@ -12,6 +12,8 @@ urlpatterns = [
     path('user/register/', views.UserRegisterAPIView.as_view(), name='user-register'),
     path('user/login/', views.UserLoginAPIView.as_view(), name='user-login'),
     path('user/logout/', views.UserLogoutAPIView.as_view(), name='user-logout'),
+    path('forgot/password/otp/', views.ForgetPasswordOTPAPIView.as_view(), name='forgot-password-otp'),
+    path('reset/password/', views.ResetPasswordAPIView.as_view(), name='reset-password'),
 
     path('instrument/dropdown/', views.InstrumentDropdownAPIView.as_view(), name='instrument-dropdown'),
     path('strategy/dropdown/', views.StrategyDropdownAPIView.as_view(), name='strategy-dropdown'),

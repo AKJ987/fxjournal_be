@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 
     'accounts',
     'tradejournal',
+    'emails',
 ]
 
 MIDDLEWARE = [
@@ -188,3 +189,15 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+EMAIL_TEMPLATE = BASE_DIR / "emails/templates"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = config.get('smtp', 'EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config.get('smtp', 'EMAIL_HOST_PASSWORD')
+FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_HEADER = "Trade Journal - {}"

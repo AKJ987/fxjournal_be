@@ -8,6 +8,8 @@ from .serializers import (
     UserCreateSerializer,
     UserLoginSerializer,
     UserLogoutSerializer,
+    ForgetPasswordOTPSerializer,
+    ResetPasswordSerializer,
 )
 
 class UserRegisterAPIView(SuccessMessageMixin, CreateAPIView):
@@ -55,3 +57,21 @@ class UserLogoutAPIView(GenericAPIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class ForgetPasswordOTPAPIView(SuccessMessageMixin, CreateAPIView):
+    """
+    API view for generating forget password OTP.
+    """
+    serializer_class = ForgetPasswordOTPSerializer
+    permission_classes = [AllowAny]
+    success_message = "OTP sent successfully."
+
+
+class ResetPasswordAPIView(SuccessMessageMixin, CreateAPIView):
+    """
+    API view for resetting password.
+    """
+    serializer_class = ResetPasswordSerializer
+    permission_classes = [AllowAny]
+    success_message = "Password updated successfully."

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password</title>
+    <style>
+        /* Responsive Overrides targeting viewport break points */
+        @media screen and (max-width: 600px) {
+            .container-wrapper {
+                width: 100% !important;
+                padding: 16px !important;
+            }
+            .inner-workspace-box {
+                padding: 32px 20px !important;
+            }
+            .digital-otp-display {
+                font-size: 36px !important;
+                letter-spacing: 6px !important;
+                padding: 24px 12px !important;
+            }
+            .excessive-spacer {
+                height: 45px !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #060809; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+    {{EMAIL_MESSAGE_HTML}}
+</body>
+</html>
